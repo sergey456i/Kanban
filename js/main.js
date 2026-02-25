@@ -37,6 +37,9 @@ Vue.component('column', {
             this.newCardDescription = '';
             this.newCardDeadline = '';
         },
+        editCard(cardIndex) {
+            this.$emit('edit-card', this.columnIndex, cardIndex);
+        },
         moveCard(cardIndex, toColumnIndex) {
             this.$emit('move-card', this.columnIndex, toColumnIndex, cardIndex);
         },
