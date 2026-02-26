@@ -6,13 +6,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 <h3>{{ card.title }}</h3>
                 <p>{{ card.description }}</p>
                 <p>Создано: {{ card.createdAt }}</p>
-                <p v-if="card.lastEdited">Изменено: {{ card.lastEdited }}</p>
+                <p v-if="card.changes.length > 0">
+                    Изменения:
+                    <ul>
+                        <li v-for="(change, index) in card.changes" :key="index">
+                            {{ change.type }}: {{ change.timestamp }}
+                        </li>
+                    </ul>
+                </p>
                 <p>Дедлайн: {{ card.deadline }}</p>
                 <p v-if="card.isOverdue" class="overdue">Просрочено</p>
                 <p v-if="card.isCompleted" class="completed">Выполнено в срок</p>
                 <p v-if="card.returnReason">Причина возврата: {{ card.returnReason }}</p>
                 <div>
-                    <button class="but" @click="$emit('edit-card')">Редактировать</button>
+                    <button v-if="columnIndex !== 3" class="but" @click="$emit('edit-card')">Редактировать</button>
                     <button class="but" @click="$emit('delete-card')">Удалить</button>
                     <button class="but" v-if="columnIndex === 0" @click="move(1)">В работу</button>
                     <button class="but" v-if="columnIndex === 1" @click="move(2)">Тестирование</button>
@@ -99,8 +106,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!this.formData.title || !this.formData.deadline) return;
 
                     if (this.editingCard) {
-                        Object.assign(this.editingCard, this.formData, {
-                            lastEdited: new Date().toLocaleString()
+                        Object.assign(this.editingCard, this.formData);
+                        this.editingCard.changes.push({
+                            type: 'Редактирование',
+                            timestamp: new Date().toLocaleString()
                         });
                     } else {
                         this.columns[0].cards.push({
@@ -110,10 +119,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             lastEdited: null,
                             isOverdue: false,
                             isCompleted: false,
-                            returnReason: null
+                            returnReason: null,
+                            changes: []
                         });
                     }
                     this.formData = { title: '', description: '', deadline: '' };
+                    this.editingCard = null;
                 },
                 editCard(card) {
                     this.formData = { ...card };
@@ -138,6 +149,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (reason) {
                         card.returnReason = reason;
                     }
+                    card.changes.push({
+                        type: 'Перемещение',
+                        timestamp: new Date().toLocaleString()
+                    });
 
                     this.columns[to].cards.push(card);
                 },
