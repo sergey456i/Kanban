@@ -7,6 +7,8 @@ Vue.component('card', {
             <p>Дата создания: {{ card.createdAt }}</p>
             <p>Последнее редактирование: {{ card.updatedAt }}</p>
             <p>Дедлайн: {{ card.deadline }}</p>
+            <p v-if="card.reasonForMove">Причина возврата: {{ card.reasonForMove }}</p>
+            <p>Debug: {{ card }}</p>
             <button class="but" @click="editCard">Редактировать</button>
             <button class="but" v-if="columnIndex === 0" @click="moveCard(1)">В работу</button>
             <button class="but" v-if="columnIndex === 1" @click="moveCard(2)">В тестирование</button>
@@ -28,6 +30,8 @@ Vue.component('card', {
             const reason = prompt('Укажите причину возврата в работу:');
             if (reason) {
                 this.$emit('move-card', 1, reason);
+            }else{
+                console.log('Причина возврата не указана');
             }
         }
     }
@@ -59,7 +63,8 @@ Vue.component('column', {
         return {
             newCardTitle: '',
             newCardDescription: '',
-            newCardDeadline: ''
+            newCardDeadline: '',
+            reasonForMove: ''
         };
     },
     methods: {
@@ -74,7 +79,8 @@ Vue.component('column', {
                 createdAt: new Date().toLocaleString(),
                 updatedAt: new Date().toLocaleString(),
                 deadline: this.newCardDeadline,
-                status: 'planned'
+                status: 'planned',
+                reasonForMove: null,
             };
             this.$emit('add-card', this.columnIndex, newCard);
             this.newCardTitle = '';
@@ -98,10 +104,10 @@ new Vue({
     data() {
         return {
             columns: [
-                { title: 'Запланированные задачи', cards: [] },
-                { title: 'Задачи в работе', cards: [] },
-                { title: 'Тестирование', cards: [] },
-                { title: 'Выполненные задачи', cards: [] }
+                {title: 'Запланированные задачи', cards: []},
+                {title: 'Задачи в работе', cards: []},
+                {title: 'Тестирование', cards: []},
+                {title: 'Выполненные задачи', cards: []}
             ]
         };
     },
@@ -119,6 +125,9 @@ new Vue({
             }
             if (reason) {
                 card.reasonForMove = reason;
+                console.log('Причина возврата сохранена:', reason);
+            } else {
+                console.log('Причина возврата не передана');
             }
             this.columns[toColumnIndex].cards.push(card);
             this.saveToLocalStorage();
@@ -147,6 +156,9 @@ new Vue({
             const data = localStorage.getItem('kanbanBoard');
             if (data) {
                 this.columns = JSON.parse(data);
+                console.log('Данные загружены из localStorage:', this.columns);
+            } else {
+                console.log('Данные в localStorage отсутствуют');
             }
         },
     },
