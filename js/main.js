@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <p v-if="card.changes.length > 0">
                     Изменения:
                     <ul>
-                        <li v-for="(change, index) in card.changes" :key="index">
+                        <li class="redaction" v-for="(change, index) in card.changes" :key="index">
                             {{ change.type }}: {{ change.timestamp }}
                         </li>
                     </ul>
@@ -95,26 +95,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
             ],
                 formData: { title: '', description: '', deadline: '' },
-                editingCard: null
+                editingCard: null,
+                nextId: 1
             }),
             methods: {
                 addCard() {
                     this.formData = { title: '', description: '', deadline: '' };
                     this.editingCard = null;
                 },
+
+                editCard(card) {
+                    this.formData = {
+                        title: card.title,
+                        description: card.description,
+                        deadline: card.deadline
+                    };
+                    this.editingCard = card;
+                },
+
                 saveCard() {
                     if (!this.formData.title || !this.formData.deadline) return;
 
                     if (this.editingCard) {
-                        Object.assign(this.editingCard, this.formData);
+                        this.editingCard.title = this.formData.title;
+                        this.editingCard.description = this.formData.description;
+                        this.editingCard.deadline = this.formData.deadline;
+
                         this.editingCard.changes.push({
                             type: 'Редактирование',
                             timestamp: new Date().toLocaleString()
                         });
                     } else {
                         this.columns[0].cards.push({
-                            id: Date.now(),
-                            ...this.formData,
+                            id: this.nextId++,
+                            title: this.formData.title,
+                            description: this.formData.description,
+                            deadline: this.formData.deadline,
                             createdAt: new Date().toLocaleString(),
                             lastEdited: null,
                             isOverdue: false,
@@ -125,10 +141,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                     this.formData = { title: '', description: '', deadline: '' };
                     this.editingCard = null;
-                },
-                editCard(card) {
-                    this.formData = { ...card };
-                    this.editingCard = card;
                 },
                 deleteCard(cardId) {
                     this.columns.forEach(col => col.cards = col.cards.filter(c => c.id !== cardId));
