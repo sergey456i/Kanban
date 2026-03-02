@@ -1,7 +1,6 @@
-document.addEventListener('DOMContentLoaded', function () {
-    Vue.component('card', {
-        props: ['card', 'columnIndex'],
-        template: `
+Vue.component('card', {
+    props: ['card', 'columnIndex'],
+    template: `
             <div class="card">
                 <h3>{{ card.title }}</h3>
                 <p>{{ card.description }}</p>
@@ -28,31 +27,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
         `,
-        methods: {
-            move(toColumn) {
+    methods: {
+        move(toColumn) {
+            this.$emit('move-card', {
+                cardId: this.card.id,
+                from: this.columnIndex,
+                to: toColumn
+            });
+        },
+        returnToWork() {
+            const reason = prompt('Укажите причину возврата в работу:');
+            if (reason) {
                 this.$emit('move-card', {
                     cardId: this.card.id,
                     from: this.columnIndex,
-                    to: toColumn
+                    to: 1,
+                    reason: reason
                 });
-            },
-            returnToWork() {
-                const reason = prompt('Укажите причину возврата в работу:');
-                if (reason) {
-                    this.$emit('move-card', {
-                        cardId: this.card.id,
-                        from: this.columnIndex,
-                        to: 1,
-                        reason: reason
-                    });
-                }
             }
         }
-    });
+    }
+});
 
-    Vue.component('column', {
-        props: ['column', 'columnIndex'],
-        template: `
+Vue.component('column', {
+    props: ['column', 'columnIndex'],
+    template: `
             <div class="column">
                 <h2>{{ column.title }}</h2>
                 <card 
@@ -66,11 +65,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 />
             </div>
         `
-    });
+});
 
-    Vue.component('board', {
-        props: ['columns'],
-        template: `
+Vue.component('board', {
+    props: ['columns'],
+    template: `
             <div class="board">
                 <column 
                     v-for="(column, index) in columns" 
@@ -83,99 +82,99 @@ document.addEventListener('DOMContentLoaded', function () {
                 />
             </div>
         `
-    });
-    new Vue({
-            el: '#app',
-            data: () => ({
-                columns: [
-                    { title: 'Запланированные задачи', cards: [] },
-                    { title: 'Задачи в работе', cards: [] },
-                    { title: 'Тестирование', cards: [] },
-                    { title: 'Выполненные задачи', cards: [] }
-
-            ],
-                formData: { title: '', description: '', deadline: '' },
-                editingCard: null,
-                nextId: 1
-            }),
-            methods: {
-                addCard() {
-                    this.formData = { title: '', description: '', deadline: '' };
-                    this.editingCard = null;
-                },
-
-                editCard(card) {
-                    this.formData = {
-                        title: card.title,
-                        description: card.description,
-                        deadline: card.deadline
-                    };
-                    this.editingCard = card;
-                },
-
-                saveCard() {
-                    if (!this.formData.title || !this.formData.deadline) return;
-
-                    if (this.editingCard) {
-                        this.editingCard.title = this.formData.title;
-                        this.editingCard.description = this.formData.description;
-                        this.editingCard.deadline = this.formData.deadline;
-
-                        this.editingCard.changes.push({
-                            type: 'Редактирование',
-                            timestamp: new Date().toLocaleString()
-                        });
-                    } else {
-                        this.columns[0].cards.push({
-                            id: this.nextId++,
-                            title: this.formData.title,
-                            description: this.formData.description,
-                            deadline: this.formData.deadline,
-                            createdAt: new Date().toLocaleString(),
-                            lastEdited: null,
-                            isOverdue: false,
-                            isCompleted: false,
-                            returnReason: null,
-                            changes: []
-                        });
-                    }
-                    this.formData = { title: '', description: '', deadline: '' };
-                    this.editingCard = null;
-                },
-                deleteCard(cardId) {
-                    this.columns.forEach(col => col.cards = col.cards.filter(c => c.id !== cardId));
-                },
-                moveCard({ cardId, from, to, reason }) {
-                    const card = this.findCard(cardId);
-                    if (!card) return;
-
-                    this.columns[from].cards = this.columns[from].cards.filter(c => c.id !== cardId);
-
-                    if (to === 3) {
-                        const deadline = new Date(card.deadline);
-                        card.isOverdue = new Date() > deadline;
-                        card.isCompleted = !card.isOverdue;
-                        card.returnReason = null;
-                    }
-
-                    if (reason) {
-                        card.returnReason = reason;
-                    }
-                    card.changes.push({
-                        type: 'Перемещение',
-                        timestamp: new Date().toLocaleString()
-                    });
-
-                    this.columns[to].cards.push(card);
-                },
-                findCard(cardId) {
-                    for (const col of this.columns) {
-                        const card = col.cards.find(c => c.id === cardId);
-                        if (card) return card;
-                    }
-                    return null;
-                }
-            }
-    });
 });
+new Vue({
+    el: '#app',
+    data: () => ({
+        columns: [
+            {title: 'Запланированные задачи', cards: []},
+            {title: 'Задачи в работе', cards: []},
+            {title: 'Тестирование', cards: []},
+            {title: 'Выполненные задачи', cards: []}
+
+        ],
+        formData: {title: '', description: '', deadline: ''},
+        editingCard: null,
+        nextId: 1
+    }),
+    methods: {
+        addCard() {
+            this.formData = {title: '', description: '', deadline: ''};
+            this.editingCard = null;
+        },
+
+        editCard(card) {
+            this.formData = {
+                title: card.title,
+                description: card.description,
+                deadline: card.deadline
+            };
+            this.editingCard = card;
+        },
+
+        saveCard() {
+            if (!this.formData.title || !this.formData.deadline) return;
+
+            if (this.editingCard) {
+                this.editingCard.title = this.formData.title;
+                this.editingCard.description = this.formData.description;
+                this.editingCard.deadline = this.formData.deadline;
+
+                this.editingCard.changes.push({
+                    type: 'Редактирование',
+                    timestamp: new Date().toLocaleString()
+                });
+            } else {
+                this.columns[0].cards.push({
+                    id: this.nextId++,
+                    title: this.formData.title,
+                    description: this.formData.description,
+                    deadline: this.formData.deadline,
+                    createdAt: new Date().toLocaleString(),
+                    lastEdited: null,
+                    isOverdue: false,
+                    isCompleted: false,
+                    returnReason: null,
+                    changes: []
+                });
+            }
+            this.formData = {title: '', description: '', deadline: ''};
+            this.editingCard = null;
+        },
+        deleteCard(cardId) {
+            this.columns.forEach(col => col.cards = col.cards.filter(c => c.id !== cardId));
+        },
+        moveCard({cardId, from, to, reason}) {
+            const card = this.findCard(cardId);
+            if (!card) return;
+
+            this.columns[from].cards = this.columns[from].cards.filter(c => c.id !== cardId);
+
+            if (to === 3) {
+                const deadline = new Date(card.deadline);
+                card.isOverdue = new Date() > deadline;
+                card.isCompleted = !card.isOverdue;
+                card.returnReason = null;
+            }
+
+            if (reason) {
+                card.returnReason = reason;
+            }
+            card.changes.push({
+                type: 'Перемещение',
+                timestamp: new Date().toLocaleString()
+            });
+
+            this.columns[to].cards.push(card);
+        },
+        findCard(cardId) {
+            for (const col of this.columns) {
+                const card = col.cards.find(c => c.id === cardId);
+                if (card) return card;
+            }
+            return null;
+        }
+    }
+});
+
 
